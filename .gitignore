@@ -1,0 +1,113 @@
+
+## 2. .gitignore
+
+```gitignore
+# ─────────────────────────────────────────────
+# 공통 (Common)
+# ─────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.shared.json
+*.swp
+*~
+
+# ─────────────────────────────────────────────
+# Node.js (frontend / backend)
+# ─────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# 빌드 산출물
+dist/
+build/
+.cache/
+coverage/
+
+# Vite / React
+frontend/dist/
+frontend/.vite/
+
+# ─────────────────────────────────────────────
+# Python (ai-server)
+# ─────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# ─────────────────────────────────────────────
+# AI 모델 가중치 / 인덱스 (용량 큼 → LFS/DVC/S3로 관리)
+# ─────────────────────────────────────────────
+ai-server/weights/*
+!ai-server/weights/.gitkeep
+*.pt
+*.pth
+*.ckpt
+*.h5
+*.onnx
+*.pkl
+*.joblib
+
+# FAISS 벡터 인덱스
+*.index
+*.faiss
+
+# ─────────────────────────────────────────────
+# 데이터셋 (원본 미포함)
+# ─────────────────────────────────────────────
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+*.dat
+*.hea
+*.atr
+*.mat
+*.edf
+*.wfdb
+# 가이드라인 PDF는 RAG에 필요 시 LFS로 관리 (필요하면 아래 주석 해제)
+# data/guidelines/*.pdf
+
+# 대용량 데이터 파일
+*.csv
+!**/sample/*.csv      # 샘플 데이터는 허용
+
+# ─────────────────────────────────────────────
+# 보안 / 자격증명 (절대 커밋 금지)
+# ─────────────────────────────────────────────
+*.pem
+*.key
+*-firebase-adminsdk-*.json
+firebase-service-account.json
+serviceAccountKey.json
+aws-credentials*
+.npmrc
+
+# ─────────────────────────────────────────────
+# Docker / DB
+# ─────────────────────────────────────────────
+docker-volumes/
+mongo-data/
+*.dump

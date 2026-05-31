@@ -1,0 +1,128 @@
+services:
+  # ─────────────────────────────────────────────
+  # MongoDB 8.x
+  # ─────────────────────────────────────────────
+  mongodb:
+    image: mongo:8.0
+    container_name: heartlink-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-heartlink}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-heartlink_dev}
+      MONGO_INITDB_DATABASE: heartlink
+    volumes:
+      - mongo-data:/data/db
+      - ./scripts/mongo-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - heartlink-net
+
+  # ─────────────────────────────────────────────
+  # Backend (Node.js + Express)
+  # ─────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: heartlink-backend
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      MONGO_URI: mongodb://${MONGO_ROOT_USER:-heartlink}:${MONGO_ROOT_PASSWORD:-heartlink_dev}@mongodb:27017/heartlink?authSource=admin
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      AI_SERVER_URL: http://ai-server:8000
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET}
+      AWS_REGION: ${AWS_REGION:-ap-northeast-2}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
+      TWILIO_PHONE_NUMBER: ${TWILIO_PHONE_NUMBER}
+      FCM_SERVICE_ACCOUNT_PATH: /app/secrets/firebase-service-account.json
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - ./backend/secrets:/app/secrets:ro
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - heartlink-net
+
+  # ─────────────────────────────────────────────
+  # AI Server (Python + FastAPI)
+  # ─────────────────────────────────────────────
+  ai-server:
+    build:
+      context: ./ai-server
+      dockerfile: Dockerfile
+    container_name: heartlink-ai
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      ENV: development
+      MONGO_URI: mongodb://${MONGO_ROOT_USER:-heartlink}:${MONGO_ROOT_PASSWORD:-heartlink_dev}@mongodb:27017/heartlink?authSource=admin
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET}
+      AWS_REGION: ${AWS_REGION:-ap-northeast-2}
+      MODEL_WEIGHTS_DIR: /app/weights
+      FAISS_INDEX_DIR: /app/faiss
+    volumes:
+      - ./ai-server:/app
+      - ./ai-server/weights:/app/weights
+      - ./ai-server/faiss:/app/faiss
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - heartlink-net
+    # GPU 사용 시 아래 주석 해제 (NVIDIA Container Toolkit 필요)
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+  # ─────────────────────────────────────────────
+  # Frontend (React + Vite)
+  # ─────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: heartlink-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_BASE_URL: http://localhost:4000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - heartlink-net
+
+volumes:
+  mongo-data:
+    driver: local
+
+networks:
+  heartlink-net:
+    driver: bridge
