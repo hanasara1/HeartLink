@@ -1,0 +1,8 @@
+motor
+boto3
+wfdb
+pyedflib
+pandas
+numpy
+pymupdf
+faiss-cpu
