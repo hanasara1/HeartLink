@@ -1,0 +1,6 @@
+{
+  "scripts": {
+    "seed": "node scripts/seed.js",
+    "seed:fresh": "node scripts/seed.js --fresh"
+  }
+}
