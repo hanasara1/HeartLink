@@ -114,13 +114,7 @@ async def run_pipeline(measurement_id: str):
     return {"status": "PROCESSED", "analysis_id": str(result.inserted_id),
             "risk_level": risk["risk_level"], "risk_score": risk["risk_score"]}
 
-# pipeline.py 하단, analysis 저장 직후
-from app.llm.report_generator import generate_report
-import httpx
-from app.core.config import settings
-
-report = await generate_report(str(result.inserted_id))
-
+ 
 # 백엔드에 알림 트리거 (위험도 분기 발송은 notification.service.js가 담당)
 async with httpx.AsyncClient() as client:
     await client.post(
@@ -128,3 +122,41 @@ async with httpx.AsyncClient() as client:
         json={"report_id": report["report_id"]},
         headers={"X-Internal-Key": settings.INTERNAL_KEY},
     )
+
+    # ── 7) LLM 듀얼 리포트 생성 (UC-14) ──
+    analysis_id = str(result.inserted_id)
+    try:
+        report = await generate_report(analysis_id)
+    except Exception as e:
+        # 리포트 실패해도 분석 결과는 보존. system_logs에 기록 (FR-20)
+        await db.system_logs.insert_one({
+            "event_type": "ERROR",
+            "severity": "HIGH",
+            "event_desc": f"리포트 생성 실패 (analysis_id={analysis_id}): {e}",
+            "service_name": "LLM_SERVER",
+            "logged_at": datetime.utcnow(),
+        })
+        return {"status": "PROCESSED_NO_REPORT", "analysis_id": analysis_id,
+                "risk_level": risk["risk_level"], "risk_score": risk["risk_score"]}
+
+    # ── 8) 위험도 단계별 알림 트리거 (UC-15) ──
+    #     실제 분기/재시도/SMS 백업은 백엔드 notification.service가 담당
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            await client.post(
+                f"{settings.BACKEND_URL}/api/internal/notify",
+                json={"report_id": report["report_id"]},
+                headers={"X-Internal-Key": settings.INTERNAL_KEY},
+            )
+    except Exception as e:
+        await db.system_logs.insert_one({
+            "event_type": "ERROR",
+            "severity": "HIGH",
+            "event_desc": f"알림 트리거 실패 (report_id={report['report_id']}): {e}",
+            "service_name": "API_SERVER",
+            "logged_at": datetime.utcnow(),
+        })
+
+    return {"status": "PROCESSED", "analysis_id": analysis_id,
+            "report_id": report["report_id"],
+            "risk_level": risk["risk_level"], "risk_score": risk["risk_score"]}

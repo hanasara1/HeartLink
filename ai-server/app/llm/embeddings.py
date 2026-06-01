@@ -14,11 +14,6 @@ if EMBED_PROVIDER == "gemini":
     from google.genai import types
     _gemini = genai.Client(api_key=os.getenv("GEMINI_API_KEY", ""))
     GEMINI_EMBED_MODEL = "gemini-embedding-001"
-else:
-    from openai import OpenAI
-    _openai = OpenAI(api_key=os.getenv("OPENAI_API_KEY", ""))
-    OPENAI_EMBED_MODEL = "text-embedding-3-small"
-
 
 def embed_texts(texts: list[str]) -> np.ndarray:
     """텍스트 리스트 → (N, 1536) float32 임베딩 행렬"""
