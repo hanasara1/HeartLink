@@ -88,7 +88,17 @@ data/processed/*
 *.edf
 *.wfdb
 # 가이드라인 PDF는 RAG에 필요 시 LFS로 관리 (필요하면 아래 주석 해제)
-# data/guidelines/*.pdf
+# 데이터셋 원본 (다운로드로 받는 것이므로 추적 안 함)
+data/raw/
+data/guidelines/*.pdf
+
+# 모델 가중치 / 인덱스
+ai-server/weights/
+*.pt
+*.joblib
+*.index
+*.npy
+
 
 # 대용량 데이터 파일
 *.csv

@@ -1,4 +1,6 @@
 import time
+import httpx
+
 from datetime import datetime
 from app.preprocessing.signal_processor import preprocess_ecg
 from app.models.classifier import arrhythmia_clf, af_clf, MODEL_VERSION
@@ -7,6 +9,8 @@ from app.risk.risk_scorer import compute_risk
 from app.db import db  # motor/pymongo 비동기 클라이언트 (별도 구현)
 from app.io.s3_loader import load_signal_from_s3  # S3 → numpy 로더 (별도 구현)
 from bson import ObjectId
+from app.core.config import settings
+from app.llm.report_generator import generate_report
 
 SQI_THRESHOLD = 0.5  # 이 값 이하면 분석 중단, 재측정 안내 (UC-12)
 
@@ -105,7 +109,22 @@ async def run_pipeline(measurement_id: str):
     await db.measurements.update_one({"_id": mid}, {"$set": {"status": "PROCESSED"}})
 
     # ── 7) LLM 리포트 생성 트리거 (별도 모듈 — UC-14) ──
-    # await generate_report(str(result.inserted_id))
+    await generate_report(str(result.inserted_id))
 
     return {"status": "PROCESSED", "analysis_id": str(result.inserted_id),
             "risk_level": risk["risk_level"], "risk_score": risk["risk_score"]}
+
+# pipeline.py 하단, analysis 저장 직후
+from app.llm.report_generator import generate_report
+import httpx
+from app.core.config import settings
+
+report = await generate_report(str(result.inserted_id))
+
+# 백엔드에 알림 트리거 (위험도 분기 발송은 notification.service.js가 담당)
+async with httpx.AsyncClient() as client:
+    await client.post(
+        f"{settings.BACKEND_URL}/api/internal/notify",
+        json={"report_id": report["report_id"]},
+        headers={"X-Internal-Key": settings.INTERNAL_KEY},
+    )

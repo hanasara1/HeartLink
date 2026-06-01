@@ -9,6 +9,11 @@ class Settings:
     MODEL_WEIGHTS_DIR = os.getenv("MODEL_WEIGHTS_DIR", "/app/weights")
     FAISS_INDEX_DIR = os.getenv("FAISS_INDEX_DIR", "/app/faiss")
 
+    # 백엔드 내부 호출용 (알림 트리거)
+    BACKEND_URL = os.getenv("BACKEND_URL", "http://backend:4000")
+    INTERNAL_KEY = os.getenv("INTERNAL_KEY", "change-me-internal-shared-secret")
+
+
     # 신호 처리 상수 (빅데이터 분석 정의서 기준)
     TARGET_FS = 360          # MIT-BIH와 통일된 샘플링 레이트
     BANDPASS_LOW = 0.5       # Hz

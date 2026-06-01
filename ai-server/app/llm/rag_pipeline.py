@@ -5,7 +5,8 @@ RAG 파이프라인: 가이드라인 벡터 검색 (FAISS)
 import os
 import faiss
 import numpy as np
-from openai import OpenAI
+
+from app.llm.embeddings import embed_texts
 from app.core.config import settings
 from app.db import db
 
@@ -25,8 +26,7 @@ class RAGRetriever:
             print("[WARN] FAISS 인덱스 없음 — RAG 근거 없이 동작")
 
     def _embed(self, text: str) -> np.ndarray:
-        resp = _client.embeddings.create(model=EMBED_MODEL, input=text)
-        return np.array(resp.data[0].embedding, dtype=np.float32).reshape(1, -1)
+        return embed_texts([text])  # (1, 1536) 반환
 
     async def retrieve(self, query: str) -> list[dict]:
         """질의 → Top-K 가이드라인 청크 반환"""

@@ -1,0 +1,20 @@
+{
+  "task": "hrv_anomaly",
+  "model": "IsolationForest (contamination=0.05)",
+  "dataset": "BIDMC PPG (normal-trained) + Synthetic Anomaly",
+  "n_normal": 53,
+  "n_synthetic_anomaly": 13,
+  "metrics": {
+    "f1": 0.7692,
+    "precision": 0.7692,
+    "recall": 0.7692,
+    "fpr": 0.0566
+  },
+  "targets": {
+    "f1": 0.7,
+    "fpr_max": 0.05
+  },
+  "pass": false,
+  "note": "PPG는 보조 지표 — ECG 분석과의 일치도(Concordance)는 별도 검증 권장",
+  "evaluated_at": "2026-06-01T03:18:10.334234"
+}
