@@ -1,0 +1,86 @@
+{
+  "task": "arrhythmia_5class",
+  "model": "ResNet1D",
+  "dataset": "MIT-BIH (inter-patient split)",
+  "n_test": 49434,
+  "metrics": {
+    "accuracy": 0.229,
+    "macro_f1": 0.1619,
+    "macro_precision": 0.2619,
+    "macro_recall": 0.5127
+  },
+  "per_class": {
+    "N": {
+      "sensitivity": 0.159,
+      "specificity": 0.9797
+    },
+    "SVEB": {
+      "sensitivity": 0.7925,
+      "specificity": 0.8867
+    },
+    "VEB": {
+      "sensitivity": 0.8954,
+      "specificity": 0.5032
+    },
+    "F": {
+      "sensitivity": 0.0026,
+      "specificity": 0.8661
+    },
+    "Q": {
+      "sensitivity": 0.7143,
+      "specificity": 0.9378
+    }
+  },
+  "confusion_matrix": {
+    "labels": [
+      "N",
+      "SVEB",
+      "VEB",
+      "F",
+      "Q"
+    ],
+    "matrix": [
+      [
+        6996,
+        5313,
+        22441,
+        6354,
+        2901
+      ],
+      [
+        85,
+        1451,
+        147,
+        100,
+        48
+      ],
+      [
+        19,
+        79,
+        2868,
+        115,
+        122
+      ],
+      [
+        6,
+        1,
+        379,
+        1,
+        1
+      ],
+      [
+        0,
+        0,
+        2,
+        0,
+        5
+      ]
+    ]
+  },
+  "targets": {
+    "macro_f1": 0.75,
+    "accuracy": 0.9
+  },
+  "pass": false,
+  "evaluated_at": "2026-06-01T03:17:51.249031"
+}

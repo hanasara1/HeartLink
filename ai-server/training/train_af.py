@@ -46,7 +46,7 @@ def train():
     val_loader = make_loader(X_val, y_val, 128, False)
 
     best_auc, patience, no_improve = 0.0, 7, 0
-    for epoch in range(1, 51):
+    for epoch in range(1, 11):
         model.train()
         for xb, yb in train_loader:
             xb, yb = xb.to(DEVICE), yb.to(DEVICE)

@@ -15,7 +15,9 @@ import asyncio
 import numpy as np
 import faiss
 import fitz  # PyMuPDF
-from openai import OpenAI
+import time  # 파일 상단 import에 추가
+
+from app.llm.embeddings import embed_texts, EMBED_DIM
 from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import datetime
 
@@ -25,8 +27,6 @@ EMBED_MODEL = "text-embedding-3-small"  # 1536차원
 EMBED_DIM = 1536
 CHUNK_SIZE = 500
 CHUNK_OVERLAP = 50
-
-_client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
 
 # ─────────────────────────────────────────────
@@ -64,9 +64,8 @@ def infer_source(filename):
 # 2) 임베딩 (배치)
 # ─────────────────────────────────────────────
 def embed_batch(texts):
-    """OpenAI 임베딩 (한 번에 여러 청크)"""
-    resp = _client.embeddings.create(model=EMBED_MODEL, input=texts)
-    return np.array([d.embedding for d in resp.data], dtype=np.float32)
+    """provider 무관 배치 임베딩"""
+    return embed_texts(texts)
 
 
 # ─────────────────────────────────────────────
@@ -93,17 +92,32 @@ async def build(pdf_dir):
         chunks = extract_chunks(pdf_path)
         print(f"[FAISS] {fname}: {len(chunks)} 청크")
 
-        # 배치 임베딩 (100개씩)
-        for b in range(0, len(chunks), 100):
-            batch = chunks[b:b + 100]
-            vectors = embed_batch(batch)
+         # 배치 임베딩 (rate limit 대응: 작은 배치 + 대기 + 429 재시도)
+        BATCH = 5            # Gemini 무료 티어 안전값
+        SLEEP = 4            # 배치 사이 대기(초) → 분당 요청 수 억제
+        for b in range(0, len(chunks), BATCH):
+            batch = chunks[b:b + BATCH]
+
+            # 429 발생 시 지수 백오프로 최대 5회 재시도
+            for attempt in range(5):
+                try:
+                    vectors = embed_batch(batch)
+                    break
+                except Exception as e:
+                    if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+                        wait = 30 * (attempt + 1)  # 30s, 60s, 90s ...
+                        print(f"  [429] rate limit — {wait}초 대기 후 재시도 ({attempt+1}/5)")
+                        time.sleep(wait)
+                    else:
+                        raise
+            else:
+                raise RuntimeError("rate limit 재시도 한도 초과 — 잠시 후 다시 실행하세요.")
+
             index.add(vectors)
 
             for j, (chunk, vec) in enumerate(zip(batch, vectors)):
                 vector_id = f"faiss_{source.lower()}_{global_idx:05d}"
                 vector_ids.append(vector_id)
-
-                # guideline_documents 저장 (upsert)
                 await db.guideline_documents.update_one(
                     {"embedding_vector_id": vector_id},
                     {"$set": {
@@ -120,6 +134,9 @@ async def build(pdf_dir):
                     upsert=True,
                 )
                 global_idx += 1
+
+            print(f"  진행: {min(b + BATCH, len(chunks))}/{len(chunks)} 청크")
+            time.sleep(SLEEP)
 
     # 인덱스 + 매핑 저장
     out_dir = settings.FAISS_INDEX_DIR

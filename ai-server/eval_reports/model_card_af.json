@@ -1,0 +1,26 @@
+{
+  "task": "af_binary",
+  "model": "ResNet1D (12-lead pretrain → Lead-II fine-tune)",
+  "dataset": "PTB-XL (official strat_fold, test=fold 10)",
+  "n_test": 2198,
+  "roc_auc": 0.9739,
+  "metrics_at_0.5": {
+    "threshold": 0.5,
+    "f1": 0.6877,
+    "sensitivity": 0.9342,
+    "precision": 0.5441
+  },
+  "metrics_at_tuned": {
+    "threshold": 0.9,
+    "f1": 0.7813,
+    "sensitivity": 0.8816,
+    "precision": 0.7016
+  },
+  "targets": {
+    "f1": 0.85,
+    "roc_auc": 0.9,
+    "sensitivity": 0.88
+  },
+  "pass": false,
+  "evaluated_at": "2026-06-01T03:17:56.653777"
+}

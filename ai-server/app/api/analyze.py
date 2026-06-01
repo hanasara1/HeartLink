@@ -1,4 +1,5 @@
 # ai-server/app/api/analyze.py
+from app.pipeline import run_pipeline
 from fastapi import APIRouter, BackgroundTasks
 from pydantic import BaseModel
 

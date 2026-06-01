@@ -65,7 +65,7 @@ def train():
     test_loader = make_loader(X_te, y_te, 64, False)
 
     best_f1, patience, no_improve = 0.0, 10, 0
-    for epoch in range(1, 101):
+    for epoch in range(1, 11):
         model.train()
         total_loss = 0
         for xb, yb in train_loader:
