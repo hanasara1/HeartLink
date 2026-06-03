@@ -5,7 +5,7 @@ LLM 듀얼 리포트 생성 (UC-14, FR-10)
 import json
 from datetime import datetime
 from bson import ObjectId
-from openai import OpenAI
+from app.llm.llm_client import call_llm_json, LLM_MODEL_NAME
 from app.core.config import settings
 from app.db import db
 from app.llm.rag_pipeline import retriever
@@ -13,8 +13,8 @@ from app.llm.prompts.templates import (
     SYSTEM_COMMON, USER_REPORT_PROMPT, GUARDIAN_REPORT_PROMPT, FORBIDDEN_TERMS,
 )
 
-_client = OpenAI(api_key=settings.OPENAI_API_KEY)
-LLM_MODEL = "gpt-4o-mini"
+
+
 DISCLAIMER = "본 서비스는 의료기기가 아니며 의학적 진단을 대체하지 않습니다. 응급 상황 시 즉시 119에 연락하시기 바랍니다."
 
 
@@ -31,14 +31,8 @@ def _build_analysis_context(analysis: dict, profile: dict) -> str:
 
 
 def _call_llm(prompt: str) -> dict:
-    resp = _client.chat.completions.create(
-        model=LLM_MODEL,
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.3,
-        max_tokens=800,
-        response_format={"type": "json_object"},
-    )
-    return json.loads(resp.choices[0].message.content)
+    return call_llm_json(prompt, temperature=0.3, max_tokens=800)
+
 
 
 def _has_forbidden(report: dict) -> bool:
@@ -97,7 +91,7 @@ async def generate_report(analysis_id: str) -> dict:
             {"guideline_id": s["guideline_id"], "section": s["section"],
              "relevance": s["relevance"]} for s in sources
         ],
-        "llm_model": LLM_MODEL,
+        "llm_model": LLM_MODEL_NAME,
         "pdf_url": None,
         "disclaimer": DISCLAIMER,
         "generated_at": now,

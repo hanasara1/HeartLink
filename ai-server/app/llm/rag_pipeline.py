@@ -10,8 +10,6 @@ from app.llm.embeddings import embed_texts
 from app.core.config import settings
 from app.db import db
 
-_client = OpenAI(api_key=settings.OPENAI_API_KEY)
-EMBED_MODEL = "text-embedding-3-small"  # 1536차원
 TOP_K = 3
 
 
