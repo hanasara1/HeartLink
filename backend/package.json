@@ -1,19 +1,29 @@
 {
-  "scripts": {
-    "seed": "node scripts/seed.js",
-    "seed:fresh": "node scripts/seed.js --fresh"
-  }
-}
-
-{
   "name": "heartlink-backend",
   "type": "commonjs",
-  "scripts": { "dev": "nodemon src/server.js", "start": "node src/server.js" },
-  "dependencies": {
-    "express": "^4.19.2", "mongoose": "^8.5.0", "jsonwebtoken": "^9.0.2",
-    "bcrypt": "^5.1.1", "multer": "^1.4.5-lts.1", "firebase-admin": "^12.3.0",
-    "twilio": "^5.2.0", "@aws-sdk/client-s3": "^3.620.0", "pdfkit": "^0.15.0",
-    "node-cron": "^3.0.3", "axios": "^1.7.0", "dotenv": "^16.4.5"
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "seed": "node scripts/seed.js",
+    "seed:fresh": "node scripts/seed.js --fresh"
   },
-  "devDependencies": { "nodemon": "^3.1.0", "jest": "^29.7.0" }
+  "dependencies": {
+    "express": "^4.19.2",
+    "mongoose": "^8.5.0",
+    "jsonwebtoken": "^9.0.2",
+    "bcrypt": "^5.1.1",
+    "multer": "^1.4.5-lts.1",
+    "firebase-admin": "^12.3.0",
+    "twilio": "^5.2.0",
+    "@aws-sdk/client-s3": "^3.620.0",
+    "pdfkit": "^0.15.0",
+    "node-cron": "^3.0.3",
+    "axios": "^1.7.0",
+    "dotenv": "^16.4.5",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0",
+    "jest": "^29.7.0"
+  }
 }
